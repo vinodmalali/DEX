@@ -16,6 +16,11 @@ interface IUniswapV2Factory {
     function setFeeToSetter(address) external;
 }
 
+interface ISakha {
+
+    function reward(address to,address tokenA,  address tokenB, uint amountADesired, uint amountBDesired) external ;  
+}
+
 interface IUniswapV2Pair {
     event Approval(address indexed owner, address indexed spender, uint value);
     event Transfer(address indexed from, address indexed to, uint value);
@@ -80,6 +85,7 @@ interface IUniswapV2Router01 {
         uint amountBMin,
         address to,
         uint deadline
+        
     ) external returns (uint amountA, uint amountB, uint liquidity);
     function addLiquidityETH(
         address token,
@@ -229,6 +235,8 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
 
     address public immutable override factory;
     address public immutable override WETH;
+    address public Sakha;
+    address public owner;
 
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, 'UniswapV2Router: EXPIRED');
@@ -236,9 +244,19 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
     }
 
     constructor(address _factory, address _WETH) public {
+        owner = msg.sender;
         factory = _factory;
-        WETH = _WETH;
+        WETH = _WETH; 
     }
+
+    modifier onlyOwner() {
+        owner = msg.sender;
+        _;
+    }
+
+   function setSakha(address _sakha) public {
+        Sakha = _sakha;
+   }
 
     receive() external payable {
         assert(msg.sender == WETH); // only accept ETH via fallback from the WETH contract
@@ -281,14 +299,21 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
         uint amountAMin,
         uint amountBMin,
         address to,
-        uint deadline
+        uint deadline    
     ) external virtual override ensure(deadline) returns (uint amountA, uint amountB, uint liquidity) {
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
         TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
         liquidity = IUniswapV2Pair(pair).mint(to);
+
+        // uint totalUSD = (amountADesired * 10) + (amountBDesired * 20);
+        // uint amtSG = totalUSD / 100;
+
+        ISakha(Sakha).reward(msg.sender, tokenA, tokenB, amountADesired, amountBDesired);
     }
+
+
     function addLiquidityETH(
         address token,
         uint amountTokenDesired,
@@ -693,7 +718,7 @@ library UniswapV2Library {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'be8f3e400b8f9d8dbd41f8702a93c76ae86a3ca0d090baf39aa642351bd68500' // init code hash
+                hex'f9b603f4ffc5b9346ebb79d5048b2b1293a4fd8e3555d934640877d949c96743' // init code hash
             ))));
     }
 
