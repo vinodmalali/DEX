@@ -288,14 +288,14 @@ contract PriceFetcher {
 
     // Function to get the latest price of Uni in USD
     function getUniPrice() external view returns (int) {
-        address assetadr = symbolToAddr['Uni'];
+        address assetadr = symbolToAddr['UNI'];
         (, int price, , ,) = AggregatorV3Interface(assetadr).latestRoundData();
         return price;
     }
 
     // Function to get the latest price of Dai in USD
     function getDaiPrice() external view returns (int) {
-        address assetadr = symbolToAddr['Dai'];
+        address assetadr = symbolToAddr['DAI'];
         (, int price, , ,) = AggregatorV3Interface(assetadr).latestRoundData();
         return price;
     }
